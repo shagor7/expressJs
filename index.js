@@ -4,15 +4,42 @@ const fs = require('fs');
 
 const app = express();
 
-app.get('/', (req, res, next) => {
-  fs.readFileSync('/file doesnt exists', (err, data) => {
-    if(err) {
+app.get('/', [
+  (req, res, next) => {
+    fs.readFile('/file-doesn\'t exist', 'utf-8', (err, data) => {
+      console.log(data);
       next(err);
-    }else {
-      res.send(data);
-    }
+    });
+  },
+  (req, res, next) =>{
+    console.log(data.property);
+  },
+]);
+
+app.use((req, res, next) =>{
+    console.log("requested url was not found");
+    next();
   });
-});
+
+// app.get('/', (req, res, next) => {
+//   setTimeout(function(){
+//     try{
+//       console.log(a);
+//     } catch(err) {
+//       next(err);
+//     }
+//   }, 100);
+// });
+
+// app.get('/', (req, res, next) => {
+//   fs.readFileSync('/file doesnt exists', (err, data) => {
+//     if(err) {
+//       next(err);
+//     }else {
+//       res.send(data);
+//     }
+//   });
+// });
 
 // app.get("/", (req, res) => {
 //         //res.send('hello');
@@ -28,17 +55,17 @@ app.get('/', (req, res, next) => {
 //         res.end(a);
 //     });
 
-app.use((err, req, res, next) =>{
-  if(res.headersSent){
-    next('there was a problem');
-  } else{
-    if(err.message){
-      res.status(500).send(err.message);
-    } else {
-      res.send("there was an error!")
-    }
-  }
-});
+// app.use((err, req, res, next) =>{
+//   if(res.headersSent){
+//     next('there was a problem');
+//   } else{
+//     if(err.message){
+//       res.status(500).send(err.message);
+//     } else {
+//       res.send("there was an error!")
+//     }
+//   }
+// });
 
 // app.use((req, res, next) =>{
 //   next("requested url was not found");
