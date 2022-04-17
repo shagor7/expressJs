@@ -1,25 +1,100 @@
-const express = require('express');
+const express = require("express");
+const multer = require("multer");
+const path = require("path");
+//const fs = require('fs');
 
-const fs = require('fs');
+//file upload folder
+const UPLOAD_FOLDER = "./uploads/";
 
 const app = express();
 
-app.get('/', [
-  (req, res, next) => {
-    fs.readFile('/file-doesn\'t exist', 'utf-8', (err, data) => {
-      console.log(data);
-      next(err);
-    });
+//define storage
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, UPLOAD_FOLDER);
   },
-  (req, res, next) =>{
-    console.log(data.property);
+  filename: (req, file, cb) => {
+    //imp file.pdf => important-file-346347463.pdf
+    const fileExt = path.extname(file.originalname);
+    const fileName = file.originalname
+      .replace(fileExt, "")
+      .toLowerCase()
+      .split(" ")
+      .join("_" + "_" + Date.now());
+    cb(null, fileName + fileExt);
   },
-]);
+});
 
-app.use((req, res, next) =>{
-    console.log("requested url was not found");
-    next();
-  });
+//prepare the final multer upload
+var upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 1000000, //1MB
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.fieldname === "avatar") {
+      if (
+        file.mimetype === "image/png" ||
+        file.mimetype === "image/jpg" ||
+        file.mimetype === "image/jpeg"
+      ) {
+        cb(null, true);
+      } else {
+        cb(new Error("Only .jpg, .png, . jpeg format allowed"));
+      }
+    } else if (file.fieldname === "doc") {
+      if (file.mimetype === "application/pdf") {
+        cb(null, true);
+      } else {
+        cb(new Error("Only .pdf allowed!"));
+      }
+    } else {
+      cb(new Error("ki jani error khaise"));
+    }
+  },
+});
+
+//application route
+app.post(
+  "/",
+  upload.fields([
+    { name: "avatar", maxCount: 1 },
+    { name: "doc", maxCount: 1 },
+  ]),
+  (req, res) => {
+    console.log(req.files);
+    res.send("hello world");
+  }
+);
+
+app.use((err, req, res, next) => {
+  if (err) {
+    if (err instanceof multer.MulterError) {
+      res.status(500).send("there was an upload error");
+    } else {
+      res.status(500).send(err.message);
+    }
+  } else {
+    res.send("success");
+  }
+});
+
+// app.get('/', [
+//   (req, res, next) => {
+//     fs.readFile('/file-doesn\'t exist', 'utf-8', (err, data) => {
+//       console.log(data);
+//       next(err);
+//     });
+//   },
+//   (req, res, next) =>{
+//     console.log(data.property);
+//   },
+// ]);
+
+// app.use((req, res, next) =>{
+//     console.log("requested url was not found");
+//     next();
+//   });
 
 // app.get('/', (req, res, next) => {
 //   setTimeout(function(){
@@ -71,18 +146,17 @@ app.use((req, res, next) =>{
 //   next("requested url was not found");
 // });
 
-    // app.use((err, req, res, next) => {
-    //   console.log(err);
-    //   if(err.message){
-    //     res.status(500).send(err.message);
-    //   } else{
-    //   res.send('there was an error')
-    //   }
-    // });
+// app.use((err, req, res, next) => {
+//   console.log(err);
+//   if(err.message){
+//     res.status(500).send(err.message);
+//   } else{
+//   res.send('there was an error')
+//   }
+// });
 // const cookieParser = require('cookie-parser');
 // const handler = require('./handle');
 //const handlee = require('./handle');
-
 
 // app.use(express.json());
 // app.use(cookieParser());
@@ -94,7 +168,6 @@ app.use((req, res, next) =>{
 // });
 
 //app.use('/admin',adminRoute);
-
 
 //app.locals.title = 'My app';
 
@@ -133,7 +206,6 @@ app.use((req, res, next) =>{
 //         } else {
 //             throw new Error('Failed to log');
 //         }
-        
 
 //     }
 // };
@@ -147,9 +219,6 @@ app.use((req, res, next) =>{
 // adminRouter.get('/dashboard', (req, res) => {
 //     res.send('Dashboard');
 // });
-
-
-
 
 // const myMiddleware2 = (req, res, next) => {
 //     console.log('I am steve');
@@ -174,5 +243,5 @@ app.use((req, res, next) =>{
 // });
 
 app.listen(3000, () => {
-    console.log('listening on port 3000');
+  console.log("listening on port 3000");
 });
